@@ -130,6 +130,7 @@
     <ClInclude Include="Main.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Blackjack.cpp" />
     <ClCompile Include="Connect4.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="TicTacToe.cpp" />

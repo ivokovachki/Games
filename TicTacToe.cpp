@@ -129,7 +129,6 @@ int turns(char table[3][3], bool& player) {
         }
     }
     else if (input == "exit") {
-        cout << "Goodbye!" << endl;
         return 0;
     }
     else {
