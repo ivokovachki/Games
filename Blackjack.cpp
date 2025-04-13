@@ -4,8 +4,10 @@
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
-
+#include "Main.h"
 using namespace std;
+
+extern string currentUser;
 
 struct Card {
 
@@ -78,7 +80,8 @@ int play() {
 	playerhand.clear();
 	dealerhand.clear();
 	initDeckOfCards(deckOfCards);
-	srand(time(0));
+	srand(static_cast<unsigned int>(time(0)));
+
 
 	struct Score {
 		int score;
@@ -312,10 +315,83 @@ int play() {
 
 int blackjack() {
 	char playAgain = ' ';
+
+	// Get initial stats
+	UserStats stats;
+	getUserStats(currentUser, stats);
+	double balance = stats.blackjackBalance;
+
 	do {
-		play();
-		cout << "Do you want to play again? (y/n) ";
-		cin >> playAgain;
+		// Update game count at the start of each game
+		updateGameStats(currentUser, "blackjack");
+
+		cout << "\nYour current balance: $" << balance << endl;
+
+		// Check if user has enough money to play
+		if (balance <= 0) {
+			cout << "You're out of money! Have a $100!" << endl;
+			balance = 100.0;
+		}
+
+		// Get bet amount
+		double betAmount;
+		cout << "Enter your bet amount (or 0 to quit): $";
+		cin >> betAmount;
+
+		if (betAmount == 0) break;
+
+		if (betAmount > balance) {
+			cout << "You don't have enough money for that bet. Try again." << endl;
+			continue;
+		}
+
+		int result = play();
+
+		// Update balance based on game result
+		if (result == 1) { // Win
+			// Update database first
+			if (updateBlackjackBalance(currentUser, betAmount)) {
+				balance += betAmount;
+				cout << "You won $" << betAmount << "!" << endl;
+			}
+			else {
+				cout << "Error updating balance in database, but you won!" << endl;
+			}
+		}
+		else if (result == 0) { // Loss
+			// Update database first
+			if (updateBlackjackBalance(currentUser, -betAmount)) {
+				balance -= betAmount;
+				cout << "You lost $" << betAmount << "." << endl;
+			}
+			else {
+				cout << "Error updating balance in database, but you lost." << endl;
+			}
+		}
+		else if (result == 2) { // Tie
+			cout << "It's a tie. Your bet is returned." << endl;
+		}
+
+		// After updating the database, refresh the balance from database to ensure consistency
+		UserStats updatedStats;
+		if (getUserStats(currentUser, updatedStats)) {
+			balance = updatedStats.blackjackBalance;
+		}
+
+		cout << "New balance: $" << balance << endl;
+
+		if (balance > 0) {
+			cout << "Play again? (y/n) ";
+			cin >> playAgain;
+		}
+		else {
+			cout << "You're out of money! Game over." << endl;
+			break;
+		}
 	} while (playAgain == 'Y' || playAgain == 'y');
+
 	return 0;
 }
+
+
+
